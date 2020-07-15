@@ -14,6 +14,8 @@ import threading
 import multiprocessing
 from functools import partial
 
+import pickle
+
 def read_args():
 
   parser = argparse.ArgumentParser()
@@ -499,8 +501,14 @@ def pred_fn(args, data_reader, figure_dir=None, result_dir=None, log_dir=None):
                                         figure_dir = figure_dir,
                                         args=args),
                                 range(len(pred_batch)))
+        #fname_pic = []
         for i in range(len(fname_batch)):
           fclog.write("{},{},{},{},{}\n".format(fname_batch[i].decode(), picks_batch[i][0][0], picks_batch[i][0][1], picks_batch[i][1][0], picks_batch[i][1][1]))
+        #  fname_pic.append(fname_batch[i].decode())
+        #pickle.dump(fname_pic,\
+        #            open(os.path.join(log_dir,args.fpred+'_fname.pickle'),'wb'))
+        #pickle.dump(picks_batch, \
+        #            open(os.path.join(log_dir,args.fpred+'.pickle'),'wb'))
 
         if last_batch:
           break
@@ -522,9 +530,15 @@ def pred_fn(args, data_reader, figure_dir=None, result_dir=None, log_dir=None):
                                         figure_dir = figure_dir,
                                         args=args),
                                 range(len(pred_batch)))
+        #fname_pic = []
         for i in range(len(fname_batch)):
           fclog.write("{},{},{},{},{}\n".format(fname_batch[i].decode(), picks_batch[i][0][0], picks_batch[i][0][1], picks_batch[i][1][0], picks_batch[i][1][1]))
         # fclog.flush()
+        #  fname_pic.append(fname_batch[i].decode())
+        #pickle.dump(fname_pic,\
+        #            open(os.path.join(log_dir,args.fpred+'_fname.pickle'),'wb'))
+        #pickle.dump(picks_batch, \
+        #            open(os.path.join(log_dir,args.fpred+'.pickle'),'wb'))
 
     fclog.close()
     print("Done")

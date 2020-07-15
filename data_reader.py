@@ -418,8 +418,8 @@ class DataReader_mseed(DataReader):
 if __name__ == "__main__":
   ## debug
   data_reader = DataReader_mseed(
-    data_dir="/data/beroza/zhuwq/Project-PhaseNet-mseed/mseed/",
-    data_list="/data/beroza/zhuwq/Project-PhaseNet-mseed/fname.txt",
+    data_dir="demo/mseed/",
+    data_list="demo/fname.csv",
     queue_size=20,
     coord=None)
   data_reader.thread_main(None, n_threads=1, start=0)
