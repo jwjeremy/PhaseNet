@@ -503,18 +503,15 @@ def pred_fn(args, data_reader, figure_dir=None, result_dir=None, log_dir=None):
                                 range(len(pred_batch)))
         #fname_pic = []
         for i in range(len(fname_batch)):
-<<<<<<< HEAD
           fclog.write("{},{},{},{},{}\n".format(fname_batch[i].decode(), picks_batch[i][0][0], picks_batch[i][0][1], picks_batch[i][1][0], picks_batch[i][1][1]))
         #  fname_pic.append(fname_batch[i].decode())
         #pickle.dump(fname_pic,\
         #            open(os.path.join(log_dir,args.fpred+'_fname.pickle'),'wb'))
         #pickle.dump(picks_batch, \
         #            open(os.path.join(log_dir,args.fpred+'.pickle'),'wb'))
-=======
           row = "{},{},{},{},{}".format(fname_batch[i].decode(), picks_batch[i][0][0], picks_batch[i][0][1],
                                         picks_batch[i][1][0], picks_batch[i][1][1]).replace("\n", "")
           fclog.write(row+"\n")
->>>>>>> e7f62e2b1096012b0cfd01846beef7780033f8fd
 
         if last_batch:
           break

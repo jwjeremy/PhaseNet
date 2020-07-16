@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Gererate fname.csv from mseed file
-Created on Wed Jul  8 17:49:17 2020
+PhaseNet wrapper
+    1) convert miniseed files to npz files for PhaseNet input
+    2) Run PhaseNet to detect phases
+    3) Phrase the output to REAL input format
 
+Created on Wed Jul  8 17:49:17 2020
 @author: jw
 """
 from obspy import read
@@ -25,7 +28,8 @@ def gen_mseed_fname(mseed_dir, channel, savedir):
       os.makedirs(savedir)
     
     with open(os.path.join(savedir, "fname.csv"), "w+") as fp,\
-         open(os.path.join(savedir, "f_sampling_rate.csv"), "w+") as fs:
+         open(os.path.join(savedir, "f_sampling_rate.csv"), "w+") as fs, \
+         open(os.path.join(savedir, "f_starttime.csv"), "w+") as f_starttime:
         fp.write("fname,E,N,Z\n")
 
         for chan in channel:
@@ -56,7 +60,8 @@ def gen_npz_intput(mseed_dir, channel, savedir):
     
     starttime = []
     with open(os.path.join(savedir, "fname.csv"), "w+") as fp,\
-         open(os.path.join(savedir, "f_sampling_rate.csv"), "w+") as fs:
+         open(os.path.join(savedir, "f_sampling_rate.csv"), "w+") as fs, \
+         open(os.path.join(savedir, "f_starttime.csv"), "w+") as f_starttime:
         fp.write("fname\n")
 
         for chan in channel:
@@ -79,14 +84,24 @@ def gen_npz_intput(mseed_dir, channel, savedir):
                                                st[key][0].stats.sampling_rate))
                     _starttime = _create_npz_input(st[key],savedir,fp, single_component=True)
                     starttime.append(_starttime)
+
+        for _list in starttime:
+            f_starttime.write("{}, {}, {}\n".format(*_list))
+
     print("Output: "+savedir)
 
     return starttime
 
 
-def _create_npz_input(st, savedir, fcsv, single_component=False):
+def _create_npz_input(st, savedir, fcsv, single_component=False, \
+                      trim_missingdata=True):
     """
     create npz file per station
+        - mseed file is processed twice with 50% overlap to avoid phases being 
+        cut in the middle
+        - single-component station would duplicate to 3 channels
+        - Phasenet would demean and normalize before feeding in the data to NN
+
     savedir: directory to save phasenet inputs
     """
 
@@ -104,9 +119,19 @@ def _create_npz_input(st, savedir, fcsv, single_component=False):
         st_n = st.select(channel="??N")
         st_z = st.select(channel="??Z")
 
-    st_e.merge(fill_value=MAX_INT32)
-    st_n.merge(fill_value=MAX_INT32)
-    st_z.merge(fill_value=MAX_INT32)
+    if trim_missingdata:
+        st_e.merge(fill_value=MAX_INT32)
+        st_n.merge(fill_value=MAX_INT32)
+        st_z.merge(fill_value=MAX_INT32)
+
+    else:
+        st_e.merge(fill_value=0)
+        st_n.merge(fill_value=0)
+        st_z.merge(fill_value=0)
+
+    #st = st.trim(min([tr.stats.starttime for tr in st]),
+    #             max([tr.stats.endtime for tr in st]),
+    #             pad=True, fill_value=0)
 
     data_e = st_e[0].data
     data_n = st_n[0].data
@@ -143,6 +168,12 @@ def _create_npz_input(st, savedir, fcsv, single_component=False):
 def run_phasenet(inputdir, outputdir):
     """
     calls run.py and runs PhaseNet
+        - Batch size: For large dataset and GPU usage, larger batch size can
+          accelerate the prediction
+        - Currently, I have found a way to use GPU backend in tensorflow in Mac
+          Please contact me if there is a way 
+          (Keras can modified to use GPU backend, but not tf)
+        - Plot results, save results slow the processes
     """
     import subprocess
 
@@ -150,7 +181,7 @@ def run_phasenet(inputdir, outputdir):
         "python",
         "run.py",
         "--mode=pred",
-        "--batch_size=5",
+        "--batch_size=1",
         "--model_dir=model/190703-214543",
         "--data_dir={}".format(inputdir),
         "--data_list={}/fname.csv".format(inputdir),
@@ -168,14 +199,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     # Read sampling rate
 
     # Clean npz files
-    import subprocess
-
-    p = subprocess.Popen([
-        "find", 
-        npz_dir,
-        '-maxdepth 1 -name "*.npz" -print0| xargs -0 rm'
-        ], cwd=".")
-    p.wait()
+    os.system("find ./" + npz_dir + ' -maxdepth 1 -name "*.npz" -print0| xargs -0 rm')
 
     print('Cleaned %s .npz files' % npz_dir)
     sampling_rate = np.loadtxt(os.path.join(npz_dir, "f_sampling_rate.csv"),\
@@ -190,6 +214,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     pd_s_picks = pd_picks[pd_picks.its != '[]']
     p_picks = []
     s_picks = []
+
     for index, row in pd_p_picks.iterrows():
         fname = row['fname'].split('.')
         net = fname[0]
@@ -235,19 +260,23 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     
 
 if __name__ == "__main__":
-    for i in range(4,11):
+    for i in range(29,40):
         doy = str(i).zfill(3)
         print('Processing day: ' + doy)
 
+        # Channel to be processed
         channel = ['HH*','BH*']
         
+        # directory configuration
         mseed_dir = '/Volumes/JW harddisk/Seismology/Data/miniseed/hkss1_rtlocal/2020/' + doy
-        #mseed_dir = 'dataset/HK_mseed/2020_001'
-        savedir = "dataset/HK_mseed/2020/" + doy
+        # Directory for temporary npz files
         savedir_npz = "dataset/HK_mseed/2020/" +doy + "/npz"
+        # Output dir for phase net
         output_dir = 'output/hk2/' + doy
+        # Input dir for REAL earthquake association
         real_dir = 'output/real/' + doy
 
+        # Start Running full process
         gen_npz_intput(mseed_dir, channel, savedir_npz)
-        run_phasenet(savedir_npz, output_dir) 
-        phase_out_2_real(output_dir, real_dir, savedir_npz)
+        #run_phasenet(savedir_npz, output_dir) 
+        #phase_out_2_real(output_dir, real_dir, savedir_npz)
