@@ -265,7 +265,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     
 
 if __name__ == "__main__":
-    for i in range(38,150):
+    for i in range(38,39):
         doy = str(i).zfill(3)
         print('Processing day: ' + doy)
 
