@@ -260,7 +260,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     
 
 if __name__ == "__main__":
-    for i in range(29,40):
+    for i in range(29,38):
         doy = str(i).zfill(3)
         print('Processing day: ' + doy)
 
@@ -277,6 +277,6 @@ if __name__ == "__main__":
         real_dir = 'output/real/' + doy
 
         # Start Running full process
-        gen_npz_intput(mseed_dir, channel, savedir_npz)
-        #run_phasenet(savedir_npz, output_dir) 
-        #phase_out_2_real(output_dir, real_dir, savedir_npz)
+        #gen_npz_intput(mseed_dir, channel, savedir_npz)
+        run_phasenet(savedir_npz, output_dir) 
+        phase_out_2_real(output_dir, real_dir, savedir_npz)
