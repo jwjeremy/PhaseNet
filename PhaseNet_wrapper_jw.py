@@ -193,6 +193,11 @@ def run_phasenet(inputdir, outputdir):
 
     return
 
+def _update_to_git(msg):
+    os.system('git add . ')
+    os.system('git commit -m ' + str(msg))
+    os.system('git push')
+    print("updated to git " + str(doy))
 
 def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     # Miniseed directory is needed to obtain the sampling rate
@@ -260,7 +265,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     
 
 if __name__ == "__main__":
-    for i in range(29,38):
+    for i in range(38,150):
         doy = str(i).zfill(3)
         print('Processing day: ' + doy)
 
@@ -268,7 +273,7 @@ if __name__ == "__main__":
         channel = ['HH*','BH*']
         
         # directory configuration
-        mseed_dir = '/Volumes/JW harddisk/Seismology/Data/miniseed/hkss1_rtlocal/2020/' + doy
+        mseed_dir = '/home/rt/rtlocal/db/2020/' + doy
         # Directory for temporary npz files
         savedir_npz = "dataset/HK_mseed/2020/" +doy + "/npz"
         # Output dir for phase net
@@ -277,6 +282,7 @@ if __name__ == "__main__":
         real_dir = 'output/real/' + doy
 
         # Start Running full process
-        #gen_npz_intput(mseed_dir, channel, savedir_npz)
+        gen_npz_intput(mseed_dir, channel, savedir_npz)
         run_phasenet(savedir_npz, output_dir) 
         phase_out_2_real(output_dir, real_dir, savedir_npz)
+        _update_to_git(doy)
