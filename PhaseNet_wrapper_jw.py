@@ -282,7 +282,7 @@ if __name__ == "__main__":
         real_dir = 'output/real/' + doy
 
         # Start Running full process
-        gen_npz_intput(mseed_dir, channel, savedir_npz)
-        run_phasenet(savedir_npz, output_dir) 
-        phase_out_2_real(output_dir, real_dir, savedir_npz)
+        #gen_npz_intput(mseed_dir, channel, savedir_npz)
+        #run_phasenet(savedir_npz, output_dir) 
+        #phase_out_2_real(output_dir, real_dir, savedir_npz)
         _update_to_git(doy)
