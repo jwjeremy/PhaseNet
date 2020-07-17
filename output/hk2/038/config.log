@@ -7,7 +7,7 @@ filters_root: 8
 kernel_size: [7, 1]
 pool_size: [4, 1]
 dilation_rate: [1, 1]
-batch_size: 5
+batch_size: 1
 class_weights: [1, 1, 1]
 loss_type: cross_entropy
 weight_decay: 0
