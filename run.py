@@ -440,7 +440,7 @@ def pred_fn(args, data_reader, figure_dir=None, result_dir=None, log_dir=None):
     batch = data_reader.dequeue(args.batch_size)
 
   model = Model(config, batch, "pred")
-  sess_config = tf.ConfigProto()
+  sess_config = tf.ConfigProto() #(device_count={"CPU": 16})
   sess_config.gpu_options.allow_growth = True
   sess_config.log_device_placement = False
 
