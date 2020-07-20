@@ -37,6 +37,7 @@ def gen_day_mseed(mseed_dir, mseed_day_dir):
         print(start_date.strftime("%Y-%m-%d"))
         year = start_date.year
         doy = start_date.strftime("%j")
+        doy = str(doy).zfill(3)
         
         _dir = os.path.join(mseed_day_dir, yr, doy)
         if not os.path.exists(_dir):
