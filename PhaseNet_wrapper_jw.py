@@ -13,6 +13,7 @@ from obspy import read
 import os
 import numpy as np
 import pandas as pd
+from datetime import date, timedelta
 import pickle
 
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
@@ -21,11 +22,42 @@ MAX_INT32 = 2147483647
 BATCH_SIZE = 3000
 STRIDE = 1500
 
+def gen_day_mseed(mseed_dir, mseed_day_dir):
+    if not os.path.exists(mseed_day_dir):
+        os.makedirs(mseed_day_dir)
+
+    st = read(mseed_dir + '/*.mseed')
+    startdate = min([tr.stats.starttime for tr in st]).date
+    endtdate = max([tr.stats.endtime for tr in st]).date
+
+    delta = timedelta(days=1)
+
+    while start_date <= end_date:
+        print(start_date.strftime("%Y-%m-%d"))
+        year = start_date.year
+        doy = start_date.strftime("%j")
+        
+        _dir = os.path.join(mseed_day_dir, yr, doy)
+        if not os.path.exists(_dir):
+            os.makedirs(_dir)
+        ms_start = UTCDateTime("%s:%sT00:00:00" % (yr, doy))
+        _st = st.cut(starttime=ms_start, endtime=ms_start+86400)
+        _st = _st._groupby('{network}.{station}')
+
+        for key in st.keys():
+            f_mseed = key + '.mseed'
+            print(f_mseed)
+            _st.write(os.path.join(_dir, f_mseed))
+
+        start_date+=delta
+            
+
+    
 
 def gen_mseed_fname(mseed_dir, channel, savedir):
     
     if not os.path.exists(savedir):
-      os.makedirs(savedir)
+        os.makedirs(savedir)
     
     with open(os.path.join(savedir, "fname.csv"), "w+") as fp,\
          open(os.path.join(savedir, "f_sampling_rate.csv"), "w+") as fs, \
@@ -260,6 +292,7 @@ def phase_out_2_real(pick_csv_dir, real_dir, npz_dir):
     
 
 if __name__ == "__main__":
+    
     for i in range(29,38):
         doy = str(i).zfill(3)
         print('Processing day: ' + doy)
